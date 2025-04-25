@@ -32,8 +32,13 @@ export class UsersController {
   //   return this.usersService.remove(id);
   // }
 
+  // @Delete()
+  // remove(@Query('_id') id: string) {
+  //   return this.usersService.remove(id);
+  // }
+
   @Delete()
-  remove(@Query('_id') id: string) {
+  remove(@Body() id: string) {
     return this.usersService.remove(id);
   }
 }

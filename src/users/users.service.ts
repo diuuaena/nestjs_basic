@@ -48,7 +48,6 @@ export class UsersService {
   // }
 
   remove(id: string) {
-    console.log('check id: ',id);
     
     // if (!mongoose.Types.ObjectId.isValid(id)) {
     //   return 'not found user'
