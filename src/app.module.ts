@@ -4,6 +4,7 @@ import { AppService } from './app.service';
 import { UsersModule } from './users/users.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   //imports: [MongooseModule.forRoot('mongodb+srv://rs-phongnq1:Phong859@@nestjs-basic.cka9gg4.mongodb.net/')],
@@ -20,7 +21,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
       //envFilePath: './.test.env',
       isGlobal: true,
     }),
-    UsersModule
+    UsersModule,
+    AuthModule
   ],
   controllers: [AppController],
   providers: [AppService],
