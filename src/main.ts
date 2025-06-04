@@ -11,12 +11,18 @@ async function bootstrap() {
   const configService = app.get(ConfigService);
   const port = configService.get<string>('PORT');
   const reflector = app.get( Reflector );
-  app.useGlobalGuards( new JwtAuthGuard( reflector ) );
+  // app.useGlobalGuards( new JwtAuthGuard( reflector ) );
   
   app.useStaticAssets(join(__dirname, '..', 'public')); // truy cập js, css, images
   app.setBaseViewsDir(join(__dirname, '..', 'views'));  // views
   app.setViewEngine('ejs');
   app.useGlobalPipes(new ValidationPipe());
+  // config cors
+  app.enableCors({
+    "origin": "*",
+    "methods": "GET,HEAD,PUT,PATCH,POST,DELETE",
+    "preflightContinue": false
+  });
   await app.listen(port);
 }
 bootstrap();
