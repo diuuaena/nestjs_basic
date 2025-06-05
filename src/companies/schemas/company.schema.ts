@@ -27,7 +27,7 @@ export class Company {
   updatedAt: Date;
 
   @Prop({type: Object})
-  updatedABy: {
+  updatedBy: {
     _id: mongoose.Schema.Types.ObjectId;
     email: string;
   }
@@ -36,7 +36,7 @@ export class Company {
   deletedAt: Date;
 
   @Prop({type: Object})
-  deletedABy: {
+  deletedBy: {
     _id: mongoose.Schema.Types.ObjectId;
     email: string;
   }
