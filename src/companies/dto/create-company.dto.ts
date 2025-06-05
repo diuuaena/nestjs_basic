@@ -1,4 +1,5 @@
 import { IsNotEmpty } from 'class-validator';
+import mongoose from 'mongoose';
 
 export class CreateCompanyDto {
 
@@ -10,10 +11,5 @@ export class CreateCompanyDto {
 
     @IsNotEmpty({ message: 'Description không được để trống'})
     description: string;
-
-    phone: string;
-
-    createdAt: Date;
     
-    updatedAt: Date;
 }
