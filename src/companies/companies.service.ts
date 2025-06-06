@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { CreateCompanyDto } from './dto/create-company.dto';
 import { UpdateCompanyDto } from './dto/update-company.dto';
 import { InjectModel } from '@nestjs/mongoose';
@@ -6,6 +6,7 @@ import { SoftDeleteModel } from 'soft-delete-plugin-mongoose';
 import { Company, CompanyDocument } from './schemas/company.schema';
 import { IUser } from 'src/users/users.interface';
 import aqp from 'api-query-params';
+import mongoose from 'mongoose';
 
 @Injectable()
 export class CompaniesService {
@@ -25,7 +26,7 @@ export class CompaniesService {
   }
 
   async findAll(currentPage: number, limit: number, qs: string) {
-    const { filter, sort, projection, population } = aqp(qs);
+    const { filter, sort, population } = aqp(qs);
     delete filter.page;
     delete filter.limit;
     let offset = (currentPage - 1) * (+limit);
@@ -54,11 +55,23 @@ export class CompaniesService {
 
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} company`;
+  findOne(id: string) {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      throw new UnprocessableEntityException("id không hợp lệ")
+    }
+    return this.companyModel.findOne({ _id: id })
   }
 
   async update(id: string, updateCompanyDto: UpdateCompanyDto, user: IUser) {
+    // check format id
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      throw new UnprocessableEntityException("id không hợp lệ")
+    }
+    // check tồn tại của company
+    const company = await this.companyModel.findOne({ _id: id })
+    if (!company)
+      throw new NotFoundException("không tìm thấy company trong hệ thống")
+    // update thông tin company
     return await this.companyModel.updateOne(
       { _id: id },
       {
@@ -72,7 +85,15 @@ export class CompaniesService {
   }
 
   async remove(id: string, user: IUser) {
-
+    // check format id
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      throw new UnprocessableEntityException("id không hợp lệ")
+    }
+    // check tồn tại của company
+    const company = await this.companyModel.findOne({ _id: id })
+    if (!company)
+      throw new NotFoundException("không tìm thấy company trong hệ thống")
+    // update deleteBy của company
     await this.companyModel.updateOne(
       { _id: id },
       {
@@ -82,6 +103,7 @@ export class CompaniesService {
         }
       }
     )
+    // softDelete company
     return this.companyModel.softDelete(
       { _id: id }
     )
