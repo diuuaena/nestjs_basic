@@ -2,14 +2,19 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestj
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { User } from 'src/decorator/customize';
 
 @Controller('users')  // => /users
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Post()
-  create(@Body() createUserDto: CreateUserDto) {
-    return this.usersService.create(createUserDto);
+  async create(@Body() createUserDto: CreateUserDto, @User() user) {
+    let newUser = await this.usersService.create(createUserDto, user);
+    return {
+      _id: newUser?._id,
+      createAt: newUser?.createdAt
+    };
   }
 
   @Get()
