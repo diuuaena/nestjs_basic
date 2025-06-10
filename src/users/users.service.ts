@@ -10,7 +10,7 @@ import { IUser } from './users.interface';
 
 @Injectable()
 export class UsersService {
-  constructor( @InjectModel(User.name) private readonly userModel: SoftDeleteModel<UserDocument>) { }
+  constructor(@InjectModel(User.name) private readonly userModel: SoftDeleteModel<UserDocument>) { }
 
   getHashPassword = (password: string) => {
     const salt = genSaltSync(10);
@@ -25,7 +25,7 @@ export class UsersService {
       throw new BadRequestException(`Email ${email} đã tồn tại. Vui lòng chọn email khác`)
     }
     const hashPassword = this.getHashPassword(password);
-    let newUser = await this.userModel.create({ 
+    let newUser = await this.userModel.create({
       email,
       password: hashPassword,
       name,
@@ -38,7 +38,7 @@ export class UsersService {
         _id: user._id,
         email: user.email
       }
-     })
+    })
     return newUser;
   }
 
@@ -81,14 +81,32 @@ export class UsersService {
     return compareSync(password, hash)
   }
 
-  async update(updateUserDto: UpdateUserDto) {
-    return await this.userModel.updateOne({ _id: updateUserDto._id }, { ...updateUserDto })
+  async update(updateUserDto: UpdateUserDto, user: IUser) {
+    return await this.userModel.updateOne(
+      { _id: updateUserDto._id },
+      {
+        ...updateUserDto,
+        updatedBy: {
+          _id: user._id,
+          email: user.email
+        }
+      }
+    )
   }
 
-  remove(id: string) {
+  async remove(id: string, user: IUser) {
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return 'not found user'
     }
+    await this.userModel.updateOne(
+      {_id: id},
+      {
+        deletedBy: {
+          _id: user._id,
+          email: user.email
+        }
+      }
+    )
     return this.userModel.softDelete({
       _id: id
     })

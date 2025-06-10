@@ -3,13 +3,14 @@ import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from 'src/decorator/customize';
+import { IUser } from './users.interface';
 
 @Controller('users')  // => /users
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Post()
-  async create(@Body() createUserDto: CreateUserDto, @User() user) {
+  async create(@Body() createUserDto: CreateUserDto, @User() user: IUser) {
     let newUser = await this.usersService.create(createUserDto, user);
     return {
       _id: newUser?._id,
@@ -28,8 +29,8 @@ export class UsersController {
   }
 
   @Patch()
-  update(@Body() updateUserDto: UpdateUserDto) {
-    return this.usersService.update(updateUserDto);
+  update(@Body() updateUserDto: UpdateUserDto, @User() user: IUser) {
+    return this.usersService.update(updateUserDto, user);
   }
 
   // @Delete(':id')
@@ -42,8 +43,8 @@ export class UsersController {
   //   return this.usersService.remove(id);
   // }
 
-  @Delete()
-  remove(@Body() id: string) {
-    return this.usersService.remove(id);
+  @Delete(':id')
+  remove(@Param('id') id: string, @User() user: IUser) {
+    return this.usersService.remove(id, user);
   }
 }
