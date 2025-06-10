@@ -26,14 +26,14 @@ export class User {
   @Prop({ type: Object })
   company: {
     _id: mongoose.Schema.Types.ObjectId;
-    email: string;
+    companyName: string;
   }
 
   @Prop()
   role: string;
 
   @Prop()
-  refreshTokem: string;
+  refreshToken: string;
 
   @Prop()
   createdAt: Date;
