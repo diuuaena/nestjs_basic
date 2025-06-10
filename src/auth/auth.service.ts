@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import { IUser } from 'src/users/users.interface';
@@ -40,7 +40,7 @@ export class AuthService {
     const refresh_token = await this.createRefreshToken(payload);
     await this.usersService.updateUserToken(refresh_token, _id)
     // set refresh token as cookies
-    response.cookie("refresh_token", refresh_token,{
+    response.cookie("refresh_token", refresh_token, {
       httpOnly: true,
       maxAge: parseFloat(ms(this.configService.get('JWT_REFRESH_EXPIRE')))
     })
@@ -69,5 +69,53 @@ export class AuthService {
       expiresIn: parseInt(ms(this.configService.get('JWT_REFRESH_EXPIRE'))) / 1000
     });
     return refresh_token;
+  }
+
+  async processNewToken(refreshToken: string, response: Response) {
+    try {
+      this.jwtService.verify(refreshToken, {
+        secret: this.configService.get<string>("JWT_REFRESH_TOKEN_SECRET")
+      })
+
+      const user = await this.usersService.findUserByRefreshToken(refreshToken)
+
+      if (!user)
+        new BadRequestException("Refresh token không hợp lệ")
+
+      const { _id, name, email, role } = user;
+      const payload = {
+        sub: "token refresh",
+        iss: "from server",
+        _id,
+        name,
+        email,
+        role
+      };
+      const refresh_token = await this.createRefreshToken(payload);
+      await this.usersService.updateUserToken(refresh_token, _id.toString())
+      response.clearCookie("refresh_token");
+      // set refresh token as cookies
+      response.cookie("refresh_token", refresh_token, {
+        httpOnly: true,
+        maxAge: parseFloat(ms(this.configService.get('JWT_REFRESH_EXPIRE')))
+      })
+      return {
+        access_token: this.jwtService.sign(payload),
+        user: {
+          _id,
+          name,
+          email,
+          role
+        }
+      };
+    } catch (error) {
+      throw new BadRequestException("Refresh token không hợp lệ")
+    }
+  }
+
+  async logout(user: IUser, response: Response){
+    await this.usersService.updateUserToken("", user._id);
+    response.clearCookie["refresh_token"];
+    return "oke";
   }
 }
