@@ -5,9 +5,11 @@ import { MulterModule } from '@nestjs/platform-express';
 import { MulterConfigService } from './multer.config';
 
 @Module({
-  imports: [MulterModule.registerAsync({
-    useClass: MulterConfigService,
-  })],
+  imports: [
+    MulterModule.registerAsync({
+      useClass: MulterConfigService,
+    })
+  ],
   controllers: [FilesController],
   providers: [FilesService]
 })

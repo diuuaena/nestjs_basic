@@ -13,15 +13,19 @@ export class FilesController {
   uploadFile(@UploadedFile(
     new ParseFilePipeBuilder()
       .addFileTypeValidator({
-        fileType: /^(image\/jpeg|image\/png|gif)$/,
+        fileType: /^(image\/jpeg|image\/png|image\/gif|text\/plain)$/i
+        //   //fileType: 'image/jpeg,image/png,image/gif,text/plain',
+        //   //fileType: 'txt',
       })
       .addMaxSizeValidator({
         maxSize: 1024 * 1024 //kb = 1MB
       })
       .build({
-        errorHttpStatusCode: HttpStatus.UNPROCESSABLE_ENTITY
+        errorHttpStatusCode: HttpStatus.UNPROCESSABLE_ENTITY,
       }),
-  ) file: Express.Multer.File) {}
+  ) file: Express.Multer.File) {
+    console.log('MIME:', file.mimetype);
+  }
 
   @Get()
   findAll() {
