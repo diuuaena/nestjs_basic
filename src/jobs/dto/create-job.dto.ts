@@ -8,6 +8,9 @@ class Company {
 
     @IsNotEmpty()
     companyName: string
+
+    @IsNotEmpty()
+    logo: string
 }
 
 export class CreateJobDto {
@@ -29,6 +32,9 @@ export class CreateJobDto {
 
     @IsNotEmpty({ message: 'Quantity không được để trống' })
     quantity: number;
+
+    @IsNotEmpty({ message: 'Location không được để trống' })
+    location: string;
 
     @IsNotEmpty({ message: 'Level không được để trống' })
     level: string;

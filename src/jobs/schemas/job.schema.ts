@@ -15,6 +15,7 @@ export class Job {
   company: {
     _id: mongoose.Schema.Types.ObjectId;
     companyName: string;
+    logo: string;
   }
 
   @Prop()
