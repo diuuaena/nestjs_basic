@@ -1,40 +1,34 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { CreateResumeDto, CreateUserCvDto } from './dto/create-resume.dto';
-import { UpdateResumeDto } from './dto/update-resume.dto';
+import { CreateRoleDto } from './dto/create-role.dto';
+import { UpdateRoleDto } from './dto/update-role.dto';
 import { IUser } from 'src/users/users.interface';
-import { Resume, ResumeDocument } from './schemas/resume.schema';
 import { InjectModel } from '@nestjs/mongoose';
+import { Role, RoleDocument } from './schemas/role.schema';
 import { SoftDeleteModel } from 'soft-delete-plugin-mongoose';
-import aqp from 'api-query-params';
 import mongoose from 'mongoose';
+import aqp from 'api-query-params';
 
 @Injectable()
-export class ResumesService {
-  constructor(@InjectModel(Resume.name) private readonly resumeModel: SoftDeleteModel<ResumeDocument>) { }
-  async create(createUserCvDto: CreateUserCvDto, user: IUser) {
-    let userCV = await this.resumeModel.create({
-      email: user.email,
-      userId: user._id,
-      status: "PENDING",
-      history: [{
-        status: "PENDING",
-        updatedAt: new Date,
-        updatedBy: {
-          _id: user._id,
-          email: user.email
-        }
-      }],
-      ...createUserCvDto,
+export class RolesService {
+  constructor(@InjectModel(Role.name) private readonly roleModel: SoftDeleteModel<RoleDocument>) { }
+
+  async create(createRoleDto: CreateRoleDto, user: IUser) {
+    let checkExist = await this.roleModel.findOne({
+      name: createRoleDto.name,
+    })
+    if (checkExist)
+      throw new BadRequestException(`Role: ${createRoleDto.name} đã tồn tại`)
+    let role = await this.roleModel.create({
+      ...createRoleDto,
       createdBy: {
         _id: user._id,
         email: user.email
       }
     })
     return {
-      _id: userCV._id,
-      createdAt: userCV.createdAt,
+      _id: role._id,
+      createdAt: role.createdAt,
     }
-
   }
 
   async findAll(currentPage: number, limit: number, qs: string) {
@@ -44,10 +38,10 @@ export class ResumesService {
     let offset = (currentPage - 1) * (+limit);
     let defaultLimit = +limit ? +limit : 10;
 
-    const totalItems = (await this.resumeModel.find(filter)).length;
+    const totalItems = (await this.roleModel.find(filter)).length;
     const totalPages = Math.ceil(totalItems / defaultLimit);
 
-    const result = await this.resumeModel.find(filter)
+    const result = await this.roleModel.find(filter)
       .skip(offset)
       .limit(defaultLimit)
       // @ts-ignore: Unreachable code error
@@ -67,37 +61,42 @@ export class ResumesService {
     }
   }
 
-  findOne(id: string) {
+  async findOne(id: string) {
     if (!mongoose.Types.ObjectId.isValid(id)) {
       throw new BadRequestException("id không hợp lệ")
     }
-    return this.resumeModel.findOne({ _id: id })
+
+    let role = await this.roleModel.findOne({ _id: id })
+    //.populate({path: "permissions", select: {_id: 1, apiPath: 1}})
+    // console.log(role.permissions)
+
+    const roleWithPermissions = await this.roleModel.findOne({ _id: id })
+      .populate({ path: 'permissions', model: 'Permission' }).exec();
+    console.log(roleWithPermissions.permissions);
+
   }
 
-  async update(id: string, updateResumeDto: UpdateResumeDto, user: IUser) {
+  async update(id: string, updateRoleDto: UpdateRoleDto, user: IUser) {
     // check format id
     if (!mongoose.Types.ObjectId.isValid(id)) {
       throw new BadRequestException("id không hợp lệ")
     }
-    // check tồn tại của company
-    const resume = await this.resumeModel.findOne({ _id: id })
-    if (!resume)
-      throw new NotFoundException("không tìm thấy company trong hệ thống")
-    // update thông tin company
-    return await this.resumeModel.updateOne(
+
+    const role = await this.roleModel.findOne({ _id: id })
+    if (!role)
+      throw new NotFoundException("không tìm thấy permission trong hệ thống")
+
+    let checkExist = await this.roleModel.findOne({
+      name: updateRoleDto.name,
+    })
+
+    if (checkExist)
+      throw new BadRequestException(`Role: ${updateRoleDto.name} đã tồn tại`)
+
+    return await this.roleModel.updateOne(
       { _id: id },
       {
-        ...updateResumeDto,
-        $push: {
-          history: {
-            status: updateResumeDto.status,
-            updatedAt: new Date,
-            updatedBy: {
-              _id: user._id,
-              email: user.email
-            }
-          }
-        },
+        ...updateRoleDto,
         updatedBy: {
           _id: user._id,
           email: user.email
@@ -107,16 +106,15 @@ export class ResumesService {
   }
 
   async remove(id: string, user: IUser) {
-    // check format id
     if (!mongoose.Types.ObjectId.isValid(id)) {
       throw new BadRequestException("id không hợp lệ")
     }
 
-    const resume = await this.resumeModel.findOne({ _id: id })
-    if (!resume)
+    const role = await this.roleModel.findOne({ _id: id })
+    if (!role)
       throw new NotFoundException("không tìm thấy resume trong hệ thống")
 
-    await this.resumeModel.updateOne(
+    await this.roleModel.updateOne(
       { _id: id },
       {
         deletedBy: {
@@ -126,12 +124,8 @@ export class ResumesService {
       }
     )
 
-    return this.resumeModel.softDelete(
+    return this.roleModel.softDelete(
       { _id: id }
     )
-  }
-
-  async getResumeByUser(user: IUser) {
-    return this.resumeModel.find({ userId: user._id })
   }
 }
