@@ -66,14 +66,16 @@ export class RolesService {
       throw new BadRequestException("id không hợp lệ")
     }
 
-    let role = await this.roleModel.findOne({ _id: id })
-    //.populate({path: "permissions", select: {_id: 1, apiPath: 1}})
-    // console.log(role.permissions)
-
-    const roleWithPermissions = await this.roleModel.findOne({ _id: id })
-      .populate({ path: 'permissions', model: 'Permission' }).exec();
-    console.log(roleWithPermissions.permissions);
-
+    const role = await this.roleModel.findOne({ _id: id })
+      //.populate({ path: 'permissions', model: 'Permission' }).exec();
+      .populate({ path: 'permissions', select: {
+        _id: 1,
+        apiPath: 1,
+        name: 1,
+        method: 1,
+        module: 1,
+      } }).exec();
+    return role;
   }
 
   async update(id: string, updateRoleDto: UpdateRoleDto, user: IUser) {
@@ -81,17 +83,6 @@ export class RolesService {
     if (!mongoose.Types.ObjectId.isValid(id)) {
       throw new BadRequestException("id không hợp lệ")
     }
-
-    const role = await this.roleModel.findOne({ _id: id })
-    if (!role)
-      throw new NotFoundException("không tìm thấy permission trong hệ thống")
-
-    let checkExist = await this.roleModel.findOne({
-      name: updateRoleDto.name,
-    })
-
-    if (checkExist)
-      throw new BadRequestException(`Role: ${updateRoleDto.name} đã tồn tại`)
 
     return await this.roleModel.updateOne(
       { _id: id },
@@ -109,7 +100,10 @@ export class RolesService {
     if (!mongoose.Types.ObjectId.isValid(id)) {
       throw new BadRequestException("id không hợp lệ")
     }
-
+    const foundRole = await this.roleModel.findById(id);
+    if (foundRole.name === "ADMIN") {
+      throw new BadRequestException("Không thể xóa role admin")
+    }
     const role = await this.roleModel.findOne({ _id: id })
     if (!role)
       throw new NotFoundException("không tìm thấy resume trong hệ thống")

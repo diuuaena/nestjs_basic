@@ -95,11 +95,20 @@ export class UsersService {
     if (!mongoose.Types.ObjectId.isValid(id)) {
       throw new UnprocessableEntityException("id không hợp lệ")
     }
-    return await this.userModel.findOne({ _id: id }).select("-password");
+    return await this.userModel.findOne({ _id: id })
+    .select("-password")
+    .populate({path: "role", select: {
+      name: 1,
+      _id: 1
+    }});
   }
 
   getUserByEmail(email: string) {
-    return this.userModel.findOne({ email: email });
+    return this.userModel.findOne({ email: email })
+    .populate({path: "role", select: {
+      name: 1,
+      permissions:1,
+    }});
   }
 
   isCheckPassword(password: string, hash: string) {
@@ -122,6 +131,10 @@ export class UsersService {
   async remove(id: string, user: IUser) {
     if (!mongoose.Types.ObjectId.isValid(id)) {
       throw new UnprocessableEntityException("id không hợp lệ")
+    }
+    const foundUser = await this.userModel.findById(id);
+    if (foundUser.email === "admin@gmail.com") {
+      throw new BadRequestException("Không thể xóa tài khoản admin")
     }
     await this.userModel.updateOne(
       { _id: id },
