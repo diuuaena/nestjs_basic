@@ -1,0 +1,52 @@
+# Thiết lập mặc định: tất cả file text sẽ dùng LF
+* text=auto eol=lf
+
+# Bảo vệ các file nhị phân (ảnh, font, v.v...) khỏi bị xử lý newline
+*.jpg binary
+*.jpeg binary
+*.png binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.ttf binary
+*.woff binary
+*.woff2 binary
+*.eot binary
+*.mp4 binary
+*.mp3 binary
+*.zip binary
+
+# TypeScript và JavaScript
+*.ts text eol=lf
+*.js text eol=lf
+
+# JSON, YAML, Env
+*.json text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+*.env text eol=lf
+
+# Markdown, HTML, CSS
+*.md text eol=lf
+*.html text eol=lf
+*.css text eol=lf
+*.scss text eol=lf
+
+# Shell / config scripts
+*.sh text eol=lf
+*.conf text eol=lf
+*.ini text eol=lf
+
+# Git config
+.gitattributes text eol=lf
+.gitignore text eol=lf
+.editorconfig text eol=lf
+.prettierrc text eol=lf
+.eslintrc.js text eol=lf
+
+# Docker, CI/CD
+Dockerfile text eol=lf
+*.dockerignore text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.gitlab-ci.yml text eol=lf
