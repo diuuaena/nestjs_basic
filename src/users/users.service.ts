@@ -8,10 +8,15 @@ import { compareSync, genSaltSync, hashSync } from "bcryptjs";
 import { SoftDeleteModel } from 'soft-delete-plugin-mongoose';
 import { IUser } from './users.interface';
 import aqp from 'api-query-params';
+import { Role, RoleDocument } from 'src/roles/schemas/role.schema';
+import { USER_ROLE } from 'src/databases/sample';
 
 @Injectable()
 export class UsersService {
-  constructor(@InjectModel(User.name) private readonly userModel: SoftDeleteModel<UserDocument>) { }
+  constructor(
+    @InjectModel(User.name) private readonly userModel: SoftDeleteModel<UserDocument>,
+    @InjectModel(Role.name) private readonly roleModel: SoftDeleteModel<RoleDocument>
+) { }
 
   getHashPassword = (password: string) => {
     const salt = genSaltSync(10);
@@ -49,6 +54,7 @@ export class UsersService {
     if (checkEmailExist) {
       throw new BadRequestException(`Email ${email} đã tồn tại. Vui lòng chọn email khác`)
     }
+    const userRole = await this.roleModel.findOne({name: USER_ROLE});
     const hashPassword = await this.getHashPassword(password);
     let user = await this.userModel.create({
       email: email,
@@ -57,7 +63,7 @@ export class UsersService {
       age: age,
       gender: gender,
       address: address,
-      role: "USER"
+      role: userRole?._id
     })
     return user;
   }
@@ -107,7 +113,6 @@ export class UsersService {
     return this.userModel.findOne({ email: email })
     .populate({path: "role", select: {
       name: 1,
-      permissions:1,
     }});
   }
 
@@ -133,7 +138,7 @@ export class UsersService {
       throw new UnprocessableEntityException("id không hợp lệ")
     }
     const foundUser = await this.userModel.findById(id);
-    if (foundUser.email === "admin@gmail.com") {
+    if (foundUser && foundUser.email === "admin@gmail.com") {
       throw new BadRequestException("Không thể xóa tài khoản admin")
     }
     await this.userModel.updateOne(
@@ -163,6 +168,10 @@ export class UsersService {
   }
 
   findUserByRefreshToken = async (refreshToken: string) => {
-    return await this.userModel.findOne({ refreshToken });
+    return await this.userModel.findOne({ refreshToken })
+    .populate({
+      path: "role",
+      select: { name: 1},
+    });
   }
 }

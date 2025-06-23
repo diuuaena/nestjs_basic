@@ -26,13 +26,13 @@ export class DatabasesService implements OnModuleInit {
     ) { }
     async onModuleInit() {
         const isInit = this.configService.get<string>("SHOULD_INIT");
-        if (isInit) {
+        if (Boolean(isInit)) {
             const countUser = await this.userModel.countDocuments({});
             const countPermission = await this.permissionModel.countDocuments({});
             const countRole = await this.roleModel.countDocuments({});
 
             //create permissions
-            if (countPermission) {
+            if (countPermission === 0) {
                 await this.permissionModel.insertMany(INIT_PERMISSIONS)
             }
 
@@ -69,8 +69,8 @@ export class DatabasesService implements OnModuleInit {
                         role: adminRole?._id
                     },
                     {
-                        name: "I'm Hỏi Dân IT",
-                        email: "hoidanit@gmail.com",
+                        name: "I'm Phong",
+                        email: "phong@gmail.com",
                         password: this.userService.getHashPassword(this.configService.get<string>("INIT_PASSWORD")),
                         age: 96,
                         gender: "MALE",

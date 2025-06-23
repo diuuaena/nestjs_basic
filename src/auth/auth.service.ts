@@ -6,13 +6,15 @@ import { RegisterUserDto } from 'src/users/dto/create-user.dto';
 import { ConfigService } from '@nestjs/config';
 import ms from 'ms';
 import { Response } from 'express';
+import { RolesService } from 'src/roles/roles.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
-    private configService: ConfigService
+    private configService: ConfigService,
+    private roleService: RolesService,
   ) { }
   // username, password là 2 tham số trả về của thư viện passport
   async validateUser(username: string, pass: string): Promise<any> {
@@ -21,21 +23,28 @@ export class AuthService {
     if (user) {
       const isValid = this.usersService.isCheckPassword(pass, user.password)
       if (isValid === true) {
-        return user;
+        const userRole = user.role as unknown as { _id: string, name: string };
+        const temp = await this.roleService.findOne(userRole?._id);
+
+        const objUser = {
+          ...user.toObject(),
+          permissions: temp?.permissions ?? []
+        }
+        return objUser;
       }
     }
     return null;
   }
 
   async login(user: IUser, response: Response) {
-    const { _id, name, email, role } = user;
+    const { _id, name, email, role, permissions } = user;
     const payload = {
       sub: "token login",
       iss: "from server",
       _id,
       name,
       email,
-      role
+      role,
     };
     const refresh_token = await this.createRefreshToken(payload);
     await this.usersService.updateUserToken(refresh_token, _id)
@@ -50,7 +59,8 @@ export class AuthService {
         _id,
         name,
         email,
-        role
+        role,
+        permissions
       }
     };
   }
@@ -93,6 +103,8 @@ export class AuthService {
       };
       const refresh_token = await this.createRefreshToken(payload);
       await this.usersService.updateUserToken(refresh_token, _id.toString())
+      const userRole = user.role as unknown as { _id: string, name: string };
+      const temp = await this.roleService.findOne(userRole?._id);
       response.clearCookie("refresh_token");
       // set refresh token as cookies
       response.cookie("refresh_token", refresh_token, {
@@ -105,7 +117,8 @@ export class AuthService {
           _id,
           name,
           email,
-          role
+          role,
+          permissions: temp?.permissions ?? []
         }
       };
     } catch (error) {
@@ -113,7 +126,7 @@ export class AuthService {
     }
   }
 
-  async logout(user: IUser, response: Response){
+  async logout(user: IUser, response: Response) {
     await this.usersService.updateUserToken("", user._id);
     response.clearCookie["refresh_token"];
     return "oke";
