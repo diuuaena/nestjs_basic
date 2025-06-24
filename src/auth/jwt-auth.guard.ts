@@ -39,7 +39,7 @@ import { IS_PUBLIC_KEY } from 'src/decorator/customize';
       const targetEndpoint = request.route?.path as string;
       const permissions = user?.permissions ?? [];
       let isExist = permissions.find(permission => targetMethod === permission.method && targetEndpoint === permission.apiPath)
-      if (targetEndpoint.startsWith("api/v1/auth")) {
+      if (targetEndpoint.startsWith("/api/v1/auth")) {
         isExist = true;
       }
       if(!isExist)
