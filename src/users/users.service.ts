@@ -120,9 +120,12 @@ export class UsersService {
     return compareSync(password, hash)
   }
 
-  async update(updateUserDto: UpdateUserDto, user: IUser) {
+  async update(id: string, updateUserDto: UpdateUserDto, user: IUser) {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      throw new UnprocessableEntityException("id không hợp lệ")
+    }
     return await this.userModel.updateOne(
-      { _id: updateUserDto._id },
+      { _id: id },
       {
         ...updateUserDto,
         updatedBy: {

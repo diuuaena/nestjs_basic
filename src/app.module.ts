@@ -15,6 +15,9 @@ import { RolesModule } from './roles/roles.module';
 import { DatabasesModule } from './databases/databases.module';
 import { SubscribersModule } from './subscribers/subscribers.module';
 import { MailModule } from './mail/mail.module';
+import { ScheduleModule } from '@nestjs/schedule';
+import { ThrottlerModule } from '@nestjs/throttler';
+import { HealthModule } from './health/health.module';
 
 @Module({
   imports: [
@@ -32,6 +35,15 @@ import { MailModule } from './mail/mail.module';
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    ScheduleModule.forRoot(),
+    ThrottlerModule.forRoot({
+      throttlers: [
+        {
+          ttl: 60000,
+          limit: 10,
+        },
+      ],
+    }),
     UsersModule,
     AuthModule,
     CompaniesModule,
@@ -42,7 +54,8 @@ import { MailModule } from './mail/mail.module';
     RolesModule,
     DatabasesModule,
     SubscribersModule,
-    MailModule
+    MailModule,
+    HealthModule
   ],
   controllers: [AppController],
   providers: [AppService],
